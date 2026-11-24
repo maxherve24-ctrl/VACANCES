@@ -7,32 +7,101 @@
 </head>
 <body>
 <h1>Dépenses vacances</h1>
+
+<h2>1. Les personnes</h2>
+<input id="nomPersonne" placeholder="Prénom">
+<button onclick="ajouterPersonne()">Ajouter</button>
+<p id="listePersonnes"></p>
+
+<h2>2. Les dépenses</h2>
+<select id="payeur"></select>
+<input id="quoi" placeholder="Quoi ? (resto, essence...)">
+<input id="montant" type="number" placeholder="Montant €">
+<button onclick="ajouterDepense()">Ajouter</button>
+<ul id="listeDepenses"></ul>
+
+<h2>3. Qui doit combien</h2>
 <div id="resultat"></div>
 
 <script>
-const paye = { "Hugo": 60, "Tom": 30, "Léa": 0 };
-const noms = Object.keys(paye);
+let personnes = [];
+let depenses = [];
 
-let total = 0;
-for (const nom of noms) {
-  total += paye[nom];
+function ajouterPersonne() {
+  const nom = document.getElementById("nomPersonne").value.trim();
+  if (nom === "" || personnes.includes(nom)) return;
+  personnes.push(nom);
+  document.getElementById("nomPersonne").value = "";
+  afficher();
 }
-const part = total / noms.length;
 
-let texte = `<p>Total : ${total} €<br>Chacun doit payer : ${part.toFixed(2)} €</p>`;
+function ajouterDepense() {
+  const payeur = document.getElementById("payeur").value;
+  const quoi = document.getElementById("quoi").value.trim();
+  const montant = parseFloat(document.getElementById("montant").value);
+  if (!payeur || isNaN(montant) || montant <= 0) return;
+  depenses.push({ payeur: payeur, quoi: quoi, montant: montant });
+  document.getElementById("quoi").value = "";
+  document.getElementById("montant").value = "";
+  afficher();
+}
 
-for (const nom of noms) {
-  const solde = paye[nom] - part;
-  if (solde > 0) {
-    texte += `<p>${nom} doit recevoir ${solde.toFixed(2)} €</p>`;
-  } else if (solde < 0) {
-    texte += `<p>${nom} doit payer ${(-solde).toFixed(2)} €</p>`;
-  } else {
-    texte += `<p>${nom} est à jour</p>`;
+function afficher() {
+  // Liste des personnes
+  document.getElementById("listePersonnes").textContent = personnes.join(", ");
+
+  // Menu déroulant "qui a payé"
+  const menu = document.getElementById("payeur");
+  menu.innerHTML = "";
+  for (const p of personnes) {
+    menu.add(new Option(p));
+  }
+
+  // Liste des dépenses
+  const liste = document.getElementById("listeDepenses");
+  liste.innerHTML = "";
+  for (const d of depenses) {
+    const li = document.createElement("li");
+    li.textContent = `${d.payeur} a payé ${d.montant.toFixed(2)} € (${d.quoi})`;
+    liste.appendChild(li);
+  }
+
+  // Calcul de qui doit combien
+  const resultat = document.getElementById("resultat");
+  resultat.innerHTML = "";
+  if (personnes.length === 0) return;
+
+  const paye = {};
+  for (const p of personnes) paye[p] = 0;
+
+  let total = 0;
+  for (const d of depenses) {
+    paye[d.payeur] += d.montant;
+    total += d.montant;
+  }
+  const part = total / personnes.length;
+
+  const lignes = [
+    `Total : ${total.toFixed(2)} €`,
+    `Chacun doit payer : ${part.toFixed(2)} €`
+  ];
+  for (const p of personnes) {
+    const solde = paye[p] - part;
+    if (solde > 0.005) {
+      lignes.push(`${p} doit recevoir ${solde.toFixed(2)} €`);
+    } else if (solde < -0.005) {
+      lignes.push(`${p} doit payer ${(-solde).toFixed(2)} €`);
+    } else {
+      lignes.push(`${p} est à jour`);
+    }
+  }
+
+  for (const l of lignes) {
+    const para = document.createElement("p");
+    para.textContent = l;
+    resultat.appendChild(para);
   }
 }
-
-document.getElementById("resultat").innerHTML = texte;
 </script>
 </body>
 </html>
