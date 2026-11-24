@@ -2,236 +2,584 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Budget vacances</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vacances">
+<meta name="theme-color" content="#0f1115">
+<title>Budget Vacances</title>
 <style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
-    font-family: -apple-system, Helvetica, sans-serif;
-    background: #f2f4f8;
     margin: 0;
-    padding: 16px;
-    color: #222;
+    font-family: -apple-system, Helvetica, sans-serif;
+    background: #0f1115;
+    color: #f1f3f7;
+    padding: env(safe-area-inset-top) 16px 110px;
   }
-  h1 { text-align: center; color: #1a73e8; }
-  h2 { font-size: 18px; margin-top: 0; }
-  .carte {
-    background: white;
-    border-radius: 14px;
-    padding: 16px;
-    margin: 0 auto 16px;
-    max-width: 500px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  .page { display: none; max-width: 520px; margin: 0 auto; animation: apparition 0.3s; }
+  .page.active { display: block; }
+  @keyframes apparition { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  h1 { font-size: 30px; margin: 20px 0 16px; }
+  h2 { font-size: 17px; margin: 0 0 12px; color: #9aa3b2; font-weight: 600; }
+
+  .carte { background: #1a1d24; border-radius: 20px; padding: 18px; margin-bottom: 16px; }
+  .hero {
+    background: linear-gradient(135deg, #6a5cff, #00c2ff);
+    border-radius: 24px; padding: 22px; margin-bottom: 16px;
+    box-shadow: 0 10px 30px rgba(106, 92, 255, 0.35);
   }
-  input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    margin-bottom: 8px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    font-size: 16px;
+  .hero .label { opacity: 0.85; font-size: 15px; }
+  .hero .montant { font-size: 40px; font-weight: 800; margin: 6px 0; }
+  .hero .sous { display: flex; justify-content: space-between; font-size: 14px; opacity: 0.9; }
+
+  input, select {
+    width: 100%; padding: 14px; margin-bottom: 10px;
+    background: #252a33; color: #f1f3f7;
+    border: 1px solid #2f3540; border-radius: 14px; font-size: 16px;
   }
-  button {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    background: #1a73e8;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
+  .ligne-inputs { display: flex; gap: 8px; }
+  .ligne-inputs > * { flex: 1; }
+  .ligne-inputs .court { flex: 0 0 70px; text-align: center; }
+
+  .bouton {
+    width: 100%; padding: 15px; border: none; border-radius: 14px;
+    background: linear-gradient(135deg, #6a5cff, #00c2ff);
+    color: white; font-size: 16px; font-weight: 700;
   }
-  .supprimer {
-    width: auto;
-    padding: 4px 10px;
-    background: #e53935;
-    font-size: 14px;
+  .bouton:active { transform: scale(0.97); }
+  .bouton.gris { background: #2a2f39; }
+  .bouton.rouge { background: #3a1f24; color: #ff6b7a; }
+
+  .item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #252a33; }
+  .item:last-child { border-bottom: none; }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: white;
   }
-  .effacer { background: #888; }
-  ul { list-style: none; padding: 0; margin: 0; }
-  li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
+  .infos { flex: 1; min-width: 0; }
+  .titre { font-weight: 600; }
+  .petit { color: #9aa3b2; font-size: 13px; margin-top: 2px; }
+  .droite { font-weight: 700; text-align: right; }
+  .croix { background: none; border: none; color: #5d6574; font-size: 20px; padding: 4px 8px; }
+
+  .barre { height: 8px; background: #252a33; border-radius: 8px; overflow: hidden; margin-top: 8px; }
+  .barre > div { height: 100%; border-radius: 8px; transition: width 0.5s; }
+
+  .donut-zone { display: flex; align-items: center; gap: 18px; }
+  .donut { width: 130px; height: 130px; border-radius: 50%; position: relative; flex-shrink: 0; }
+  .donut::after { content: ""; position: absolute; inset: 22px; background: #1a1d24; border-radius: 50%; }
+  .legende { flex: 1; font-size: 14px; }
+  .legende div { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+  .pastille { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  .ok { color: #3ddc97; }
+  .alerte { color: #ff6b7a; }
+  .vide { text-align: center; color: #5d6574; padding: 20px 0; }
+
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; justify-content: space-around;
+    background: rgba(20, 22, 28, 0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid #252a33;
+    padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
   }
-  .petit { color: #666; font-size: 14px; }
-  .gros { font-size: 22px; font-weight: bold; text-align: center; color: #1a73e8; }
-  .alerte { color: #c62828; font-weight: bold; }
-  .categorie { padding: 10px 0; border-bottom: 1px solid #eee; }
+  nav button {
+    background: none; border: none; color: #5d6574;
+    font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  }
+  nav button span { font-size: 24px; filter: grayscale(1); opacity: 0.6; }
+  nav button.active { color: #f1f3f7; }
+  nav button.active span { filter: none; opacity: 1; }
+
+  #toast {
+    position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 50%;
+    transform: translateX(-50%) translateY(-120px);
+    background: #f1f3f7; color: #0f1115; font-weight: 600;
+    padding: 12px 20px; border-radius: 30px; transition: transform 0.35s; z-index: 10;
+  }
+  #toast.visible { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
-<h1>🏖️ Budget vacances</h1>
 
-<div class="carte">
-  <h2>1. Qui met combien ?</h2>
-  <input id="nom" placeholder="Prénom">
-  <input id="budget" type="number" placeholder="Budget €">
-  <button onclick="ajouterPersonne()">Ajouter</button>
-  <ul id="listePersonnes"></ul>
+<div id="toast"></div>
+
+<!-- ========== ONGLET ACCUEIL ========== -->
+<div class="page active" id="page-accueil">
+  <h1>🏖️ Vacances</h1>
+  <div class="hero">
+    <div class="label">Cagnotte totale</div>
+    <div class="montant" id="heroTotal">0 €</div>
+    <div class="sous">
+      <span id="heroDepense">Dépensé : 0 €</span>
+      <span id="heroReste">Reste : 0 €</span>
+    </div>
+  </div>
+
+  <div class="carte">
+    <h2>Répartition</h2>
+    <div class="donut-zone">
+      <div class="donut" id="donut"></div>
+      <div class="legende" id="legende"></div>
+    </div>
+  </div>
+
+  <div class="carte">
+    <h2>Budget par catégorie</h2>
+    <div id="suiviCategories"></div>
+  </div>
+
+  <button class="bouton" onclick="partager()">📤 Partager avec les potes</button>
 </div>
 
-<div class="carte">
-  <h2>2. Les catégories</h2>
-  <input id="nomCat" placeholder="Catégorie (bouffe, essence...)">
-  <input id="pourcent" type="number" placeholder="Pourcentage %">
-  <button onclick="ajouterCategorie()">Ajouter</button>
-  <ul id="listeCategories"></ul>
-  <p id="totalPourcent"></p>
+<!-- ========== ONGLET POTES ========== -->
+<div class="page" id="page-potes">
+  <h1>👥 Les potes</h1>
+  <div class="carte">
+    <h2>Ajouter quelqu'un</h2>
+    <input id="nom" placeholder="Prénom">
+    <input id="budget" type="number" inputmode="decimal" placeholder="Son budget €">
+    <button class="bouton" onclick="ajouterPersonne()">Ajouter</button>
+  </div>
+  <div class="carte">
+    <h2>Qui met combien</h2>
+    <div id="listePersonnes"></div>
+  </div>
 </div>
 
-<div class="carte">
-  <h2>3. La répartition</h2>
-  <p class="gros" id="cagnotte"></p>
-  <div id="repartition"></div>
+<!-- ========== ONGLET CATÉGORIES ========== -->
+<div class="page" id="page-categories">
+  <h1>🧠 Le plan</h1>
+  <div class="carte">
+    <h2>Dis-moi comment sera le voyage</h2>
+    <label class="petit">Nombre de jours</label>
+    <input id="jours" type="number" inputmode="numeric" min="1" value="5" oninput="changerVoyage()">
+
+    <label class="petit">Logement</label>
+    <select id="logement" onchange="changerVoyage()">
+      <option value="payer">🏠 À payer sur place</option>
+      <option value="paye">✅ Déjà payé ou gratuit</option>
+    </select>
+
+    <label class="petit">Transport</label>
+    <select id="transport" onchange="changerVoyage()">
+      <option value="voiture">🚗 Voiture (essence + péage)</option>
+      <option value="train">🚆 Train</option>
+      <option value="avion">✈️ Avion</option>
+      <option value="paye">✅ Déjà payé</option>
+    </select>
+
+    <label class="petit">Repas</label>
+    <select id="repas" onchange="changerVoyage()">
+      <option value="cuisine">🍳 On cuisine surtout</option>
+      <option value="mix" selected>🍕 Moitié courses, moitié resto</option>
+      <option value="resto">🍽️ Resto tous les jours</option>
+    </select>
+
+    <label class="petit">Activités</label>
+    <select id="activites" onchange="changerVoyage()">
+      <option value="chill">😎 Chill, pas grand-chose</option>
+      <option value="normal" selected>🎯 Quelques sorties</option>
+      <option value="fond">🔥 À fond (soirées, parcs, sorties)</option>
+    </select>
+  </div>
+  <div class="carte">
+    <h2>Le plan calculé</h2>
+    <div id="listeCategories"></div>
+  </div>
 </div>
 
-<div class="carte">
-  <button class="effacer" onclick="toutEffacer()">Tout effacer</button>
+<!-- ========== ONGLET DÉPENSES ========== -->
+<div class="page" id="page-depenses">
+  <h1>💸 Dépenses</h1>
+  <div class="carte">
+    <h2>Nouvelle dépense</h2>
+    <select id="catDepense"></select>
+    <input id="quoi" placeholder="Quoi ? (resto du soir...)">
+    <input id="montant" type="number" inputmode="decimal" placeholder="Montant €">
+    <button class="bouton" onclick="ajouterDepense()">Ajouter la dépense</button>
+  </div>
+  <div class="carte">
+    <h2>Historique</h2>
+    <div id="listeDepenses"></div>
+  </div>
+  <button class="bouton rouge" onclick="toutEffacer()">🗑️ Tout effacer</button>
 </div>
+
+<!-- ========== BARRE D'ONGLETS ========== -->
+<nav>
+  <button class="active" data-page="accueil" onclick="ouvrir('accueil')"><span>🏠</span>Accueil</button>
+  <button data-page="potes" onclick="ouvrir('potes')"><span>👥</span>Potes</button>
+  <button data-page="categories" onclick="ouvrir('categories')"><span>🧠</span>Le plan</button>
+  <button data-page="depenses" onclick="ouvrir('depenses')"><span>💸</span>Dépenses</button>
+</nav>
 
 <script>
-let personnes = [];   // { nom, budget }
-let categories = [    // { nom, pourcent }
-  { nom: "Logement", pourcent: 35 },
-  { nom: "Bouffe", pourcent: 30 },
-  { nom: "Essence", pourcent: 20 },
-  { nom: "Activités", pourcent: 15 }
-];
+// ================= DONNÉES =================
+const COULEURS = ["#6a5cff", "#00c2ff", "#3ddc97", "#ffb547", "#ff6b7a", "#c86bff", "#4dd0e1", "#f06292"];
 
-// --- Sauvegarde sur le téléphone ---
+let personnes = [];   // { nom, budget }
+let voyage = { jours: 5, logement: "payer", transport: "voiture", repas: "mix", activites: "normal" };
+let categories = [];  // calculées automatiquement : { emoji, nom, pourcent }
+let depenses = [];    // { categorie, quoi, montant, date }
+
+// ================= LE CERVEAU : il décide la répartition =================
+function calculerPlan() {
+  // 1. On donne des "points" à chaque catégorie selon le voyage
+  const points = [];
+
+  if (voyage.logement === "payer") {
+    points.push({ emoji: "🏠", nom: "Logement", points: 35 });
+  }
+
+  const transport = { voiture: 15, train: 20, avion: 28, paye: 0 }[voyage.transport];
+  const emojiTransport = { voiture: "⛽", train: "🚆", avion: "✈️", paye: "🚗" }[voyage.transport];
+  if (transport > 0) {
+    points.push({ emoji: emojiTransport, nom: "Transport", points: transport });
+  }
+
+  // Plus le séjour est long, plus la bouffe pèse lourd
+  const bouffeParJour = { cuisine: 4, mix: 6, resto: 9 }[voyage.repas];
+  points.push({ emoji: "🍔", nom: "Bouffe", points: bouffeParJour * voyage.jours });
+
+  const activites = { chill: 8, normal: 15, fond: 25 }[voyage.activites];
+  points.push({ emoji: "🎉", nom: "Activités", points: activites });
+
+  // Toujours garder un peu de côté
+  points.push({ emoji: "🛟", nom: "Imprévus", points: 7 });
+
+  // 2. On transforme les points en pourcentages qui font 100 %
+  let totalPoints = 0;
+  for (const p of points) totalPoints += p.points;
+
+  categories = points.map(function (p) {
+    return { emoji: p.emoji, nom: p.nom, pourcent: Math.round(p.points / totalPoints * 100) };
+  });
+
+  // 3. On corrige l'arrondi pour tomber pile sur 100 %
+  let somme = 0;
+  for (const c of categories) somme += c.pourcent;
+  const bouffe = categories.find(function (c) { return c.nom === "Bouffe"; });
+  bouffe.pourcent += 100 - somme;
+}
+
+function changerVoyage() {
+  const jours = parseInt(valeur("jours"));
+  voyage.jours = isNaN(jours) || jours < 1 ? 1 : jours;
+  voyage.logement = document.getElementById("logement").value;
+  voyage.transport = document.getElementById("transport").value;
+  voyage.repas = document.getElementById("repas").value;
+  voyage.activites = document.getElementById("activites").value;
+  afficher();
+}
+
+function remplirFormulaireVoyage() {
+  document.getElementById("jours").value = voyage.jours;
+  document.getElementById("logement").value = voyage.logement;
+  document.getElementById("transport").value = voyage.transport;
+  document.getElementById("repas").value = voyage.repas;
+  document.getElementById("activites").value = voyage.activites;
+}
+
+// ================= SAUVEGARDE =================
 function sauvegarder() {
   try {
-    localStorage.setItem("cagnotteVacances", JSON.stringify({ personnes: personnes, categories: categories }));
+    localStorage.setItem("vacancesApp2", JSON.stringify({ personnes, voyage, depenses }));
   } catch (e) {}
 }
 
 function charger() {
   try {
-    const data = JSON.parse(localStorage.getItem("cagnotteVacances"));
+    const data = JSON.parse(localStorage.getItem("vacancesApp2"));
     if (data) {
-      personnes = data.personnes;
-      categories = data.categories;
+      personnes = data.personnes || [];
+      voyage = Object.assign(voyage, data.voyage || {});
+      depenses = data.depenses || [];
     }
   } catch (e) {}
 }
 
-// --- Actions ---
+// ================= OUTILS =================
+// Crée un élément HTML avec une classe et un texte
+function el(balise, classe, texte) {
+  const e = document.createElement(balise);
+  if (classe) e.className = classe;
+  if (texte !== undefined) e.textContent = texte;
+  return e;
+}
+
+function euros(n) {
+  return n.toFixed(2).replace(".", ",") + " €";
+}
+
+function couleur(i) {
+  return COULEURS[i % COULEURS.length];
+}
+
+function toast(message) {
+  const t = document.getElementById("toast");
+  t.textContent = message;
+  t.classList.add("visible");
+  clearTimeout(t.timer);
+  t.timer = setTimeout(function () { t.classList.remove("visible"); }, 2000);
+}
+
+function valeur(id) {
+  return document.getElementById(id).value.trim();
+}
+
+function vider(...ids) {
+  for (const id of ids) document.getElementById(id).value = "";
+}
+
+// ================= NAVIGATION =================
+function ouvrir(nomPage) {
+  document.querySelectorAll(".page").forEach(function (p) { p.classList.remove("active"); });
+  document.getElementById("page-" + nomPage).classList.add("active");
+  document.querySelectorAll("nav button").forEach(function (b) {
+    b.classList.toggle("active", b.dataset.page === nomPage);
+  });
+  window.scrollTo(0, 0);
+}
+
+// ================= CALCULS =================
+function cagnotte() {
+  let total = 0;
+  for (const p of personnes) total += p.budget;
+  return total;
+}
+
+function depenseDansCategorie(nomCat) {
+  let total = 0;
+  for (const d of depenses) {
+    if (d.categorie === nomCat) total += d.montant;
+  }
+  return total;
+}
+
+function totalDepense() {
+  let total = 0;
+  for (const d of depenses) total += d.montant;
+  return total;
+}
+
+// ================= ACTIONS =================
 function ajouterPersonne() {
-  const nom = document.getElementById("nom").value.trim();
-  const budget = parseFloat(document.getElementById("budget").value);
-  if (nom === "" || isNaN(budget) || budget < 0) return;
+  const nom = valeur("nom");
+  const budget = parseFloat(valeur("budget"));
+  if (nom === "" || isNaN(budget) || budget < 0) return toast("⚠️ Prénom et budget");
   personnes.push({ nom: nom, budget: budget });
-  document.getElementById("nom").value = "";
-  document.getElementById("budget").value = "";
+  vider("nom", "budget");
   afficher();
+  toast("✅ " + nom + " ajouté");
 }
 
-function ajouterCategorie() {
-  const nom = document.getElementById("nomCat").value.trim();
-  const pourcent = parseFloat(document.getElementById("pourcent").value);
-  if (nom === "" || isNaN(pourcent) || pourcent <= 0) return;
-  categories.push({ nom: nom, pourcent: pourcent });
-  document.getElementById("nomCat").value = "";
-  document.getElementById("pourcent").value = "";
+function ajouterDepense() {
+  const categorie = document.getElementById("catDepense").value;
+  const quoi = valeur("quoi");
+  const montant = parseFloat(valeur("montant"));
+  if (!categorie || isNaN(montant) || montant <= 0) return toast("⚠️ Catégorie et montant");
+  depenses.unshift({ categorie: categorie, quoi: quoi, montant: montant, date: Date.now() });
+  vider("quoi", "montant");
   afficher();
+  toast("💸 Dépense ajoutée");
 }
 
-function supprimerPersonne(i) {
-  personnes.splice(i, 1);
-  afficher();
-}
-
-function supprimerCategorie(i) {
-  categories.splice(i, 1);
+function supprimer(liste, i) {
+  liste.splice(i, 1);
   afficher();
 }
 
 function toutEffacer() {
-  if (confirm("Tout effacer ?")) {
+  if (confirm("Tout effacer (potes et dépenses) ?")) {
     personnes = [];
+    depenses = [];
     afficher();
+    toast("🗑️ Tout est effacé");
   }
 }
 
-// --- Petit outil : une ligne avec un bouton ✕ ---
-function creerLigne(texte, actionSupprimer) {
-  const li = document.createElement("li");
-  const span = document.createElement("span");
-  span.textContent = texte;
-  const bouton = document.createElement("button");
-  bouton.textContent = "✕";
-  bouton.className = "supprimer";
-  bouton.onclick = actionSupprimer;
-  li.append(span, bouton);
-  return li;
-}
-
-// --- Affichage ---
-function afficher() {
-  sauvegarder();
-
-  // Personnes
-  const listeP = document.getElementById("listePersonnes");
-  listeP.innerHTML = "";
-  personnes.forEach(function (p, i) {
-    listeP.appendChild(creerLigne(`${p.nom} : ${p.budget.toFixed(2)} €`,
-      function () { supprimerPersonne(i); }));
-  });
-
-  // Catégories
-  const listeC = document.getElementById("listeCategories");
-  listeC.innerHTML = "";
-  let totalPourcent = 0;
-  categories.forEach(function (c, i) {
-    totalPourcent += c.pourcent;
-    listeC.appendChild(creerLigne(`${c.nom} : ${c.pourcent} %`,
-      function () { supprimerCategorie(i); }));
-  });
-
-  const infoPourcent = document.getElementById("totalPourcent");
-  if (totalPourcent === 100) {
-    infoPourcent.textContent = "Total : 100 % ✅";
-    infoPourcent.className = "petit";
-  } else {
-    infoPourcent.textContent = `Total : ${totalPourcent} % (il faut 100 %)`;
-    infoPourcent.className = "alerte";
-  }
-
-  // Cagnotte totale
-  let cagnotte = 0;
-  for (const p of personnes) cagnotte += p.budget;
-  document.getElementById("cagnotte").textContent = `Cagnotte : ${cagnotte.toFixed(2)} €`;
-
-  // Répartition par catégorie, et qui met combien
-  const zone = document.getElementById("repartition");
-  zone.innerHTML = "";
+function partager() {
+  let texte = "🏖️ Budget vacances\nCagnotte : " + euros(cagnotte()) + "\n\n";
   for (const c of categories) {
-    const bloc = document.createElement("div");
-    bloc.className = "categorie";
-
-    const titre = document.createElement("div");
-    const montantCat = cagnotte * c.pourcent / 100;
-    titre.textContent = `${c.nom} (${c.pourcent} %) : ${montantCat.toFixed(2)} €`;
-    titre.style.fontWeight = "bold";
-    bloc.appendChild(titre);
-
-    const details = document.createElement("div");
-    details.className = "petit";
-    const parts = personnes.map(function (p) {
-      return `${p.nom} ${(p.budget * c.pourcent / 100).toFixed(2)} €`;
-    });
-    details.textContent = parts.join(" · ");
-    bloc.appendChild(details);
-
-    zone.appendChild(bloc);
+    texte += c.emoji + " " + c.nom + " : " + euros(cagnotte() * c.pourcent / 100) + "\n";
+    for (const p of personnes) {
+      texte += "   " + p.nom + " met " + euros(p.budget * c.pourcent / 100) + "\n";
+    }
+  }
+  if (navigator.share) {
+    navigator.share({ text: texte }).catch(function () {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(texte).then(function () { toast("📋 Copié !"); });
   }
 }
 
-// Au démarrage
+// ================= AFFICHAGE =================
+function afficher() {
+  calculerPlan();
+  sauvegarder();
+  afficherAccueil();
+  afficherPersonnes();
+  afficherCategories();
+  afficherDepenses();
+}
+
+function afficherAccueil() {
+  const total = cagnotte();
+  const depense = totalDepense();
+  document.getElementById("heroTotal").textContent = euros(total);
+  document.getElementById("heroDepense").textContent = "Dépensé : " + euros(depense);
+  document.getElementById("heroReste").textContent = "Reste : " + euros(total - depense);
+
+  // Graphique rond (donut)
+  let totalPourcent = 0;
+  for (const c of categories) totalPourcent += c.pourcent;
+  let debut = 0;
+  const morceaux = [];
+  categories.forEach(function (c, i) {
+    const fin = debut + (totalPourcent > 0 ? c.pourcent / totalPourcent * 100 : 0);
+    morceaux.push(couleur(i) + " " + debut + "% " + fin + "%");
+    debut = fin;
+  });
+  document.getElementById("donut").style.background =
+    morceaux.length ? "conic-gradient(" + morceaux.join(", ") + ")" : "#252a33";
+
+  const legende = document.getElementById("legende");
+  legende.innerHTML = "";
+  categories.forEach(function (c, i) {
+    const ligne = el("div");
+    const pastille = el("span", "pastille");
+    pastille.style.background = couleur(i);
+    ligne.append(pastille, el("span", "", c.emoji + " " + c.nom + " · " + c.pourcent + " %"));
+    legende.appendChild(ligne);
+  });
+
+  // Suivi : prévu vs dépensé
+  const zone = document.getElementById("suiviCategories");
+  zone.innerHTML = "";
+  if (categories.length === 0) zone.appendChild(el("div", "vide", "Aucune catégorie"));
+  categories.forEach(function (c, i) {
+    const prevu = total * c.pourcent / 100;
+    const utilise = depenseDansCategorie(c.nom);
+    const reste = prevu - utilise;
+
+    const item = el("div", "item");
+    const infos = el("div", "infos");
+    infos.appendChild(el("div", "titre", c.emoji + " " + c.nom));
+    infos.appendChild(el("div", "petit", euros(utilise) + " sur " + euros(prevu)));
+
+    const barre = el("div", "barre");
+    const rempli = el("div");
+    const pct = prevu > 0 ? Math.min(utilise / prevu * 100, 100) : 0;
+    rempli.style.width = pct + "%";
+    rempli.style.background = reste < 0 ? "#ff6b7a" : couleur(i);
+    barre.appendChild(rempli);
+    infos.appendChild(barre);
+
+    const droite = el("div", "droite " + (reste < 0 ? "alerte" : "ok"), euros(reste));
+    item.append(infos, droite);
+    zone.appendChild(item);
+  });
+}
+
+function afficherPersonnes() {
+  const zone = document.getElementById("listePersonnes");
+  zone.innerHTML = "";
+  if (personnes.length === 0) zone.appendChild(el("div", "vide", "Ajoute tes potes 👆"));
+  const total = cagnotte();
+
+  personnes.forEach(function (p, i) {
+    const item = el("div", "item");
+    const avatar = el("div", "avatar", p.nom.charAt(0).toUpperCase());
+    avatar.style.background = couleur(i);
+
+    const infos = el("div", "infos");
+    infos.appendChild(el("div", "titre", p.nom));
+    const part = total > 0 ? Math.round(p.budget / total * 100) : 0;
+    infos.appendChild(el("div", "petit", part + " % de la cagnotte"));
+    const details = categories.map(function (c) {
+      return c.emoji + " " + euros(p.budget * c.pourcent / 100);
+    }).join("  ");
+    infos.appendChild(el("div", "petit", details));
+
+    const droite = el("div", "droite", euros(p.budget));
+    const croix = el("button", "croix", "✕");
+    croix.onclick = function () { supprimer(personnes, i); };
+
+    item.append(avatar, infos, droite, croix);
+    zone.appendChild(item);
+  });
+}
+
+function afficherCategories() {
+  const zone = document.getElementById("listeCategories");
+  zone.innerHTML = "";
+  const total = cagnotte();
+  if (personnes.length === 0) zone.appendChild(el("div", "vide", "Ajoute d'abord les potes et leur budget 👥"));
+
+  categories.forEach(function (c, i) {
+    const montantCat = total * c.pourcent / 100;
+    const item = el("div", "item");
+    const avatar = el("div", "avatar", c.emoji);
+    avatar.style.background = couleur(i);
+
+    const infos = el("div", "infos");
+    infos.appendChild(el("div", "titre", c.nom + " · " + c.pourcent + " %"));
+
+    // Petit bonus : budget bouffe par personne et par jour
+    if (c.nom === "Bouffe" && personnes.length > 0) {
+      const parJour = montantCat / personnes.length / voyage.jours;
+      infos.appendChild(el("div", "petit", "≈ " + euros(parJour) + " par personne et par jour"));
+    }
+
+    const qui = personnes.map(function (p) {
+      return p.nom + " " + euros(p.budget * c.pourcent / 100);
+    }).join(" · ");
+    if (qui) infos.appendChild(el("div", "petit", qui));
+
+    const droite = el("div", "droite", euros(montantCat));
+    item.append(avatar, infos, droite);
+    zone.appendChild(item);
+  });
+
+  // Menu déroulant des dépenses
+  const menu = document.getElementById("catDepense");
+  menu.innerHTML = "";
+  for (const c of categories) menu.add(new Option(c.emoji + " " + c.nom, c.nom));
+}
+
+function afficherDepenses() {
+  const zone = document.getElementById("listeDepenses");
+  zone.innerHTML = "";
+  if (depenses.length === 0) zone.appendChild(el("div", "vide", "Aucune dépense pour l'instant"));
+
+  depenses.forEach(function (d, i) {
+    const cat = categories.find(function (c) { return c.nom === d.categorie; });
+    const index = categories.indexOf(cat);
+    const item = el("div", "item");
+    const avatar = el("div", "avatar", cat ? cat.emoji : "📦");
+    avatar.style.background = index >= 0 ? couleur(index) : "#2a2f39";
+
+    const infos = el("div", "infos");
+    infos.appendChild(el("div", "titre", d.quoi || d.categorie));
+    const date = new Date(d.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+    infos.appendChild(el("div", "petit", d.categorie + " · " + date));
+
+    const droite = el("div", "droite", "-" + euros(d.montant));
+    const croix = el("button", "croix", "✕");
+    croix.onclick = function () { supprimer(depenses, i); };
+    item.append(avatar, infos, droite, croix);
+    zone.appendChild(item);
+  });
+}
+
+// ================= DÉMARRAGE =================
 charger();
+remplirFormulaireVoyage();
 afficher();
 </script>
 </body>
