@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dépenses vacances</title>
+</head>
+<body>
+<h1>Dépenses vacances</h1>
+<div id="resultat"></div>
+
+<script>
+const paye = { "Hugo": 60, "Tom": 30, "Léa": 0 };
+const noms = Object.keys(paye);
+
+let total = 0;
+for (const nom of noms) {
+  total += paye[nom];
+}
+const part = total / noms.length;
+
+let texte = `<p>Total : ${total} €<br>Chacun doit payer : ${part.toFixed(2)} €</p>`;
+
+for (const nom of noms) {
+  const solde = paye[nom] - part;
+  if (solde > 0) {
+    texte += `<p>${nom} doit recevoir ${solde.toFixed(2)} €</p>`;
+  } else if (solde < 0) {
+    texte += `<p>${nom} doit payer ${(-solde).toFixed(2)} €</p>`;
+  } else {
+    texte += `<p>${nom} est à jour</p>`;
+  }
+}
+
+document.getElementById("resultat").innerHTML = texte;
+</script>
+</body>
+</html>
