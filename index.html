@@ -3,105 +3,236 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dépenses vacances</title>
+<title>Budget vacances</title>
+<style>
+  body {
+    font-family: -apple-system, Helvetica, sans-serif;
+    background: #f2f4f8;
+    margin: 0;
+    padding: 16px;
+    color: #222;
+  }
+  h1 { text-align: center; color: #1a73e8; }
+  h2 { font-size: 18px; margin-top: 0; }
+  .carte {
+    background: white;
+    border-radius: 14px;
+    padding: 16px;
+    margin: 0 auto 16px;
+    max-width: 500px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #1a73e8;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .supprimer {
+    width: auto;
+    padding: 4px 10px;
+    background: #e53935;
+    font-size: 14px;
+  }
+  .effacer { background: #888; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .petit { color: #666; font-size: 14px; }
+  .gros { font-size: 22px; font-weight: bold; text-align: center; color: #1a73e8; }
+  .alerte { color: #c62828; font-weight: bold; }
+  .categorie { padding: 10px 0; border-bottom: 1px solid #eee; }
+</style>
 </head>
 <body>
-<h1>Dépenses vacances</h1>
+<h1>🏖️ Budget vacances</h1>
 
-<h2>1. Les personnes</h2>
-<input id="nomPersonne" placeholder="Prénom">
-<button onclick="ajouterPersonne()">Ajouter</button>
-<p id="listePersonnes"></p>
+<div class="carte">
+  <h2>1. Qui met combien ?</h2>
+  <input id="nom" placeholder="Prénom">
+  <input id="budget" type="number" placeholder="Budget €">
+  <button onclick="ajouterPersonne()">Ajouter</button>
+  <ul id="listePersonnes"></ul>
+</div>
 
-<h2>2. Les dépenses</h2>
-<select id="payeur"></select>
-<input id="quoi" placeholder="Quoi ? (resto, essence...)">
-<input id="montant" type="number" placeholder="Montant €">
-<button onclick="ajouterDepense()">Ajouter</button>
-<ul id="listeDepenses"></ul>
+<div class="carte">
+  <h2>2. Les catégories</h2>
+  <input id="nomCat" placeholder="Catégorie (bouffe, essence...)">
+  <input id="pourcent" type="number" placeholder="Pourcentage %">
+  <button onclick="ajouterCategorie()">Ajouter</button>
+  <ul id="listeCategories"></ul>
+  <p id="totalPourcent"></p>
+</div>
 
-<h2>3. Qui doit combien</h2>
-<div id="resultat"></div>
+<div class="carte">
+  <h2>3. La répartition</h2>
+  <p class="gros" id="cagnotte"></p>
+  <div id="repartition"></div>
+</div>
+
+<div class="carte">
+  <button class="effacer" onclick="toutEffacer()">Tout effacer</button>
+</div>
 
 <script>
-let personnes = [];
-let depenses = [];
+let personnes = [];   // { nom, budget }
+let categories = [    // { nom, pourcent }
+  { nom: "Logement", pourcent: 35 },
+  { nom: "Bouffe", pourcent: 30 },
+  { nom: "Essence", pourcent: 20 },
+  { nom: "Activités", pourcent: 15 }
+];
 
-function ajouterPersonne() {
-  const nom = document.getElementById("nomPersonne").value.trim();
-  if (nom === "" || personnes.includes(nom)) return;
-  personnes.push(nom);
-  document.getElementById("nomPersonne").value = "";
-  afficher();
+// --- Sauvegarde sur le téléphone ---
+function sauvegarder() {
+  try {
+    localStorage.setItem("cagnotteVacances", JSON.stringify({ personnes: personnes, categories: categories }));
+  } catch (e) {}
 }
 
-function ajouterDepense() {
-  const payeur = document.getElementById("payeur").value;
-  const quoi = document.getElementById("quoi").value.trim();
-  const montant = parseFloat(document.getElementById("montant").value);
-  if (!payeur || isNaN(montant) || montant <= 0) return;
-  depenses.push({ payeur: payeur, quoi: quoi, montant: montant });
-  document.getElementById("quoi").value = "";
-  document.getElementById("montant").value = "";
-  afficher();
-}
-
-function afficher() {
-  // Liste des personnes
-  document.getElementById("listePersonnes").textContent = personnes.join(", ");
-
-  // Menu déroulant "qui a payé"
-  const menu = document.getElementById("payeur");
-  menu.innerHTML = "";
-  for (const p of personnes) {
-    menu.add(new Option(p));
-  }
-
-  // Liste des dépenses
-  const liste = document.getElementById("listeDepenses");
-  liste.innerHTML = "";
-  for (const d of depenses) {
-    const li = document.createElement("li");
-    li.textContent = `${d.payeur} a payé ${d.montant.toFixed(2)} € (${d.quoi})`;
-    liste.appendChild(li);
-  }
-
-  // Calcul de qui doit combien
-  const resultat = document.getElementById("resultat");
-  resultat.innerHTML = "";
-  if (personnes.length === 0) return;
-
-  const paye = {};
-  for (const p of personnes) paye[p] = 0;
-
-  let total = 0;
-  for (const d of depenses) {
-    paye[d.payeur] += d.montant;
-    total += d.montant;
-  }
-  const part = total / personnes.length;
-
-  const lignes = [
-    `Total : ${total.toFixed(2)} €`,
-    `Chacun doit payer : ${part.toFixed(2)} €`
-  ];
-  for (const p of personnes) {
-    const solde = paye[p] - part;
-    if (solde > 0.005) {
-      lignes.push(`${p} doit recevoir ${solde.toFixed(2)} €`);
-    } else if (solde < -0.005) {
-      lignes.push(`${p} doit payer ${(-solde).toFixed(2)} €`);
-    } else {
-      lignes.push(`${p} est à jour`);
+function charger() {
+  try {
+    const data = JSON.parse(localStorage.getItem("cagnotteVacances"));
+    if (data) {
+      personnes = data.personnes;
+      categories = data.categories;
     }
-  }
+  } catch (e) {}
+}
 
-  for (const l of lignes) {
-    const para = document.createElement("p");
-    para.textContent = l;
-    resultat.appendChild(para);
+// --- Actions ---
+function ajouterPersonne() {
+  const nom = document.getElementById("nom").value.trim();
+  const budget = parseFloat(document.getElementById("budget").value);
+  if (nom === "" || isNaN(budget) || budget < 0) return;
+  personnes.push({ nom: nom, budget: budget });
+  document.getElementById("nom").value = "";
+  document.getElementById("budget").value = "";
+  afficher();
+}
+
+function ajouterCategorie() {
+  const nom = document.getElementById("nomCat").value.trim();
+  const pourcent = parseFloat(document.getElementById("pourcent").value);
+  if (nom === "" || isNaN(pourcent) || pourcent <= 0) return;
+  categories.push({ nom: nom, pourcent: pourcent });
+  document.getElementById("nomCat").value = "";
+  document.getElementById("pourcent").value = "";
+  afficher();
+}
+
+function supprimerPersonne(i) {
+  personnes.splice(i, 1);
+  afficher();
+}
+
+function supprimerCategorie(i) {
+  categories.splice(i, 1);
+  afficher();
+}
+
+function toutEffacer() {
+  if (confirm("Tout effacer ?")) {
+    personnes = [];
+    afficher();
   }
 }
+
+// --- Petit outil : une ligne avec un bouton ✕ ---
+function creerLigne(texte, actionSupprimer) {
+  const li = document.createElement("li");
+  const span = document.createElement("span");
+  span.textContent = texte;
+  const bouton = document.createElement("button");
+  bouton.textContent = "✕";
+  bouton.className = "supprimer";
+  bouton.onclick = actionSupprimer;
+  li.append(span, bouton);
+  return li;
+}
+
+// --- Affichage ---
+function afficher() {
+  sauvegarder();
+
+  // Personnes
+  const listeP = document.getElementById("listePersonnes");
+  listeP.innerHTML = "";
+  personnes.forEach(function (p, i) {
+    listeP.appendChild(creerLigne(`${p.nom} : ${p.budget.toFixed(2)} €`,
+      function () { supprimerPersonne(i); }));
+  });
+
+  // Catégories
+  const listeC = document.getElementById("listeCategories");
+  listeC.innerHTML = "";
+  let totalPourcent = 0;
+  categories.forEach(function (c, i) {
+    totalPourcent += c.pourcent;
+    listeC.appendChild(creerLigne(`${c.nom} : ${c.pourcent} %`,
+      function () { supprimerCategorie(i); }));
+  });
+
+  const infoPourcent = document.getElementById("totalPourcent");
+  if (totalPourcent === 100) {
+    infoPourcent.textContent = "Total : 100 % ✅";
+    infoPourcent.className = "petit";
+  } else {
+    infoPourcent.textContent = `Total : ${totalPourcent} % (il faut 100 %)`;
+    infoPourcent.className = "alerte";
+  }
+
+  // Cagnotte totale
+  let cagnotte = 0;
+  for (const p of personnes) cagnotte += p.budget;
+  document.getElementById("cagnotte").textContent = `Cagnotte : ${cagnotte.toFixed(2)} €`;
+
+  // Répartition par catégorie, et qui met combien
+  const zone = document.getElementById("repartition");
+  zone.innerHTML = "";
+  for (const c of categories) {
+    const bloc = document.createElement("div");
+    bloc.className = "categorie";
+
+    const titre = document.createElement("div");
+    const montantCat = cagnotte * c.pourcent / 100;
+    titre.textContent = `${c.nom} (${c.pourcent} %) : ${montantCat.toFixed(2)} €`;
+    titre.style.fontWeight = "bold";
+    bloc.appendChild(titre);
+
+    const details = document.createElement("div");
+    details.className = "petit";
+    const parts = personnes.map(function (p) {
+      return `${p.nom} ${(p.budget * c.pourcent / 100).toFixed(2)} €`;
+    });
+    details.textContent = parts.join(" · ");
+    bloc.appendChild(details);
+
+    zone.appendChild(bloc);
+  }
+}
+
+// Au démarrage
+charger();
+afficher();
 </script>
 </body>
 </html>
